@@ -9,29 +9,73 @@
         android:layout_height="wrap_content"
         android:text="@string/hello" />
 
-    <LinearLayout
-        android:id="@+id/linearLayout1"
+    <TableLayout
+        android:id="@+id/tableLayout1"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical" >
+        android:layout_height="wrap_content" >
 
-        <CheckBox
-            android:id="@+id/checkBox_train"
+        <TableRow
+            android:id="@+id/tableRow1"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Train" />
+            android:layout_height="wrap_content" >
 
-        <CheckBox
-            android:id="@+id/checkBox_recognition"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Recognition" />
+            <Button
+                android:id="@+id/button_train"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Train" />
 
-        <CheckBox
-            android:id="@+id/checkBox_close_gesture"
+            <TextView
+                android:id="@+id/textView1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hold for training" />
+
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/tableRow2"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Close Gesture" />
-    </LinearLayout>
+            android:layout_height="wrap_content" >
+
+            <Button
+                android:id="@+id/button_recognition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Recognize" />
+
+            <TextView
+                android:id="@+id/textView2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hold for recognition" />
+
+        </TableRow>
+
+        <TableRow
+            android:id="@+id/tableRow3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" >
+
+            <Button
+                android:id="@+id/button_close_gesture"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Close gesture" />
+
+            <TextView
+                android:id="@+id/textView3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save gesture sequence" />
+
+        </TableRow>
+    </TableLayout>
+    
+		<TextView
+	        android:id="@+id/textView_status"
+	        android:layout_width="wrap_content"
+	        android:layout_height="wrap_content"
+	        android:text="" />
 
 </LinearLayout>
