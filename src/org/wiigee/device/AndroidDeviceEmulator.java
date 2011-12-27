@@ -24,10 +24,13 @@
 
 package org.wiigee.device;
 
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
+import org.openintents.sensorsimulator.hardware.Sensor;
+import org.openintents.sensorsimulator.hardware.SensorEvent;
+import org.openintents.sensorsimulator.hardware.SensorEventListener;
+
 import android.hardware.SensorManager;
+import android.util.Log;
+
 
 /**
  * Device representation for Android Mobile Phones, like HTC Magic. Since
@@ -39,11 +42,11 @@ import android.hardware.SensorManager;
  * @author Benjamin 'BePo' Poppinga
  *
  */
-public class AndroidDevice extends Device implements SensorEventListener {
+public class AndroidDeviceEmulator extends Device implements SensorEventListener {
 
     private float x0, y0, z0, x1, y1, z1;
 
-    public AndroidDevice() {
+    public AndroidDeviceEmulator() {
         super(false);
         // 'Calibrate' values
         this.x0 = 0;
@@ -52,13 +55,14 @@ public class AndroidDevice extends Device implements SensorEventListener {
         this.x1 = SensorManager.STANDARD_GRAVITY;
         this.y1 = 0;
         this.z1 = SensorManager.STANDARD_GRAVITY;
+
     }
 
     public void onSensorChanged(SensorEvent sevent) {
         Sensor sensor = sevent.sensor;
         float[] values = sevent.values;
 
-        if (this.accelerationEnabled && sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+        if (this.accelerationEnabled) {
 
             double x, y, z;
             float xraw, yraw, zraw;

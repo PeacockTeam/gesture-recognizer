@@ -24,9 +24,13 @@
 package org.wiigee.control;
 
 import org.wiigee.device.AndroidDevice;
+import org.wiigee.device.AndroidDeviceEmulator;
+import org.wiigee.device.Device;
 import org.wiigee.event.GestureListener;
 import org.wiigee.filter.Filter;
 import org.wiigee.util.Log;
+
+import android.os.Build;
 
 /**
  * This is for using wiigee on Android Smartphones. This port has been
@@ -46,14 +50,23 @@ public class AndroidWiigee extends Wiigee {
     protected static String pluginreleasedate = "20090717";
 
     // Device
-    private AndroidDevice device;
-
+    private Device device;
     
+    // XXX: Use di/ioc?
     public AndroidWiigee() {
         super();
         Log.write("This is wiigee-plugin-android (Andgee) version "+pluginversion+" ("+pluginreleasedate+")");
-        device = new AndroidDevice();
+        
+        if (isEmulator()) {
+        	device = new AndroidDeviceEmulator();
+        } else {
+        	device = new AndroidDevice();
+    	}
     }
+    
+	public static boolean isEmulator() {
+	    return Build.MANUFACTURER.equals("unknown");
+	}
 
     public void addGestureListener(GestureListener listener) {
             device.addGestureListener(listener);
@@ -64,7 +77,7 @@ public class AndroidWiigee extends Wiigee {
     }
 
 
-    public AndroidDevice getDevice() {
+    public Device getDevice() {
         return device;
     }
 

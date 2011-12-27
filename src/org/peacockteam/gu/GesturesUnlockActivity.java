@@ -1,29 +1,38 @@
 package org.peacockteam.gu;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.openintents.sensorsimulator.db.SensorSimulator;
+import org.openintents.sensorsimulator.hardware.SensorEventListener;
+import org.openintents.sensorsimulator.hardware.SensorManagerSimulator;
 import org.wiigee.control.AndroidWiigee;
 import org.wiigee.event.AccelerationEvent;
 import org.wiigee.event.AccelerationListener;
-import org.wiigee.event.ButtonListener;
-import org.wiigee.event.ButtonPressedEvent;
-import org.wiigee.event.ButtonReleasedEvent;
 import org.wiigee.event.GestureEvent;
 import org.wiigee.event.GestureListener;
 import org.wiigee.event.MotionStartEvent;
 import org.wiigee.event.MotionStopEvent;
-import org.wiigee.filter.DirectionalEquivalenceFilter;
-import org.wiigee.filter.HighPassFilter;
-import org.wiigee.filter.IdleStateFilter;
-import org.wiigee.filter.LowPassFilter;
-import org.wiigee.filter.MotionDetectFilter;
-import org.wiigee.logic.TriggeredProcessingUnit;
 
 import android.app.Activity;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorListener;
 import android.hardware.SensorManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -31,13 +40,12 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.TextView;
 
-public class GesturesUnlockActivity extends Activity implements GestureListener,
-	AccelerationListener {
+public class GesturesUnlockActivity extends Activity {
 	
 	private SensorManager mSensorManager;
+	private SensorManagerSimulator mSensorManagerSimulator;
 	
 	final private AndroidWiigee wiigee = new AndroidWiigee();
 	
@@ -51,7 +59,12 @@ public class GesturesUnlockActivity extends Activity implements GestureListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-		mSensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
+        if (isEmulator()) {
+        	mSensorManagerSimulator = SensorManagerSimulator.getSystemService(this, SENSOR_SERVICE);
+        	mSensorManagerSimulator.connectSimulator();
+        } else {
+        	mSensorManager = (SensorManager) this.getSystemService(SENSOR_SERVICE);
+        }
 
 //		wiigee.getDevice().resetAccelerationFilters();
 //		wiigee.getDevice().addAccelerationFilter(new LowPassFilter());
@@ -81,17 +94,7 @@ public class GesturesUnlockActivity extends Activity implements GestureListener,
 				textview_status.setText("Rec: " + event.getId() + " Prob:" + event.getProbability());
 			}
 		});
-        
-        button_train.setOnTouchListener(new OnTouchListener() {
-			
-			@Override
-			public boolean onTouch(View v, MotionEvent event) {
-				// TODO Auto-generated method stub
-				return false;
-			}
-		});
-        
-        
+
         button_recognition.setOnTouchListener(new OnTouchListener() {
 			
 			@Override
@@ -141,9 +144,16 @@ public class GesturesUnlockActivity extends Activity implements GestureListener,
 	protected void onResume() {
 		super.onResume();
 		
-		mSensorManager.registerListener(wiigee.getDevice(), 
-				mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), 
-				SensorManager.SENSOR_DELAY_NORMAL);
+		if (isEmulator()) {
+			mSensorManagerSimulator.registerListener((SensorEventListener) wiigee.getDevice(), 
+					mSensorManagerSimulator.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), 
+					SensorManager.SENSOR_DELAY_NORMAL);
+		} else {
+			mSensorManager.registerListener((android.hardware.SensorEventListener) wiigee.getDevice(), 
+					mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), 
+					SensorManager.SENSOR_DELAY_NORMAL);
+		}
+
 		try {
 			wiigee.getDevice().setAccelerationEnabled(true);
 		} catch (IOException e) {
@@ -154,7 +164,13 @@ public class GesturesUnlockActivity extends Activity implements GestureListener,
 	@Override
 	protected void onPause() {
 		super.onPause();
-		mSensorManager.unregisterListener(wiigee.getDevice());
+
+		if (isEmulator()) {
+			mSensorManagerSimulator.unregisterListener((SensorEventListener) wiigee.getDevice());
+		} else {
+			mSensorManager.unregisterListener((android.hardware.SensorEventListener) wiigee.getDevice());
+		}
+		
 		try {
 			wiigee.getDevice().setAccelerationEnabled(false);
 		} catch (Exception e) {
@@ -162,27 +178,36 @@ public class GesturesUnlockActivity extends Activity implements GestureListener,
 		}
 	}
 
-	@Override
-	public void accelerationReceived(AccelerationEvent event) {
-		// TODO Auto-generated method stub
-		Log.i(getClass().toString(), "accelerationReceived:" + event.toString());
+	public static boolean isEmulator() {
+	    return Build.MANUFACTURER.equals("unknown");
 	}
+	
+	public void postData() {
+	    HttpClient httpclient = new DefaultHttpClient();
+	    HttpPost httppost = new HttpPost("http://www.yoursite.com/script.php");
 
-	@Override
-	public void motionStartReceived(MotionStartEvent event) {
-		// TODO Auto-generated method stub
-		Log.i(getClass().toString(), "motionStartReceived:" + event.toString());
-	}
-
-	@Override
-	public void motionStopReceived(MotionStopEvent event) {
-		// TODO Auto-generated method stub
-		Log.i(getClass().toString(), "motionStopReceived:" + event.toString());
-	}
-
-	@Override
-	public void gestureReceived(GestureEvent event) {
-		// TODO Auto-generated method stub
-		Log.i(getClass().toString(), "gestureReceived:" + event.toString());
+	    try {
+	    	
+			JSONArray data = 
+					new JSONArray()
+					.put(new JSONObject()
+							.put("type", "random")
+							.put("time", "2011-12-10T00:01:26.984Z")
+							.put("data", new JSONObject().put("random", "Hello"))
+							.put("type", "random"));
+	
+	        
+	        httppost.setEntity(new StringEntity(data.toString()));
+	        httppost.setHeader("Content-type", "application/json");
+	        
+	        HttpResponse response = httpclient.execute(httppost);
+	        
+	    } catch(JSONException e) {
+	        // TODO Auto-generated catch block
+	    } catch (ClientProtocolException e) {
+	        // TODO Auto-generated catch block
+	    } catch (IOException e) {
+	        // TODO Auto-generated catch block
+	    }
 	}
 }
