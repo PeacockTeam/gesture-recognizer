@@ -2,6 +2,7 @@ package org.peacockteam.gu;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
@@ -34,6 +35,7 @@ import android.hardware.SensorListener;
 import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -53,6 +55,9 @@ public class GesturesUnlockActivity extends Activity {
 	private static int CLOSE_GESTURE_BUTTON = 2;
 	private static int RECOGNITION_BUTTON = 3;
 	
+	// TODO: let user change ulr from app 
+	private static String ACCLAB_URL = "http://192.168.0.189:3000/1.0/acc/put";
+	
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -66,6 +71,15 @@ public class GesturesUnlockActivity extends Activity {
         	mSensorManager = (SensorManager) this.getSystemService(SENSOR_SERVICE);
         }
 
+        // We use IMEI code for identity this device (really?) in acclab
+        TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+        final String  deviceId = telephonyManager.getDeviceId();
+        
+        if (deviceId.equals("000000000000000")) {
+        	// XXX: do not pull this data
+        	// or trying generate unqique id for emulator (wifi, mac, or?)
+        }
+        
 //		wiigee.getDevice().resetAccelerationFilters();
 //		wiigee.getDevice().addAccelerationFilter(new LowPassFilter());
 //		wiigee.getDevice().addAccelerationFilter(new IdleStateFilter());
@@ -74,6 +88,42 @@ public class GesturesUnlockActivity extends Activity {
 //		wiigee.getDevice().addAccelerationFilter(new MotionDetectFilter(this));
 //		wiigee.getDevice().addAccelerationFilter(new DirectionalEquivalenceFilter());
 		
+        wiigee.getDevice().addAccelerationListener(new AccelerationListener() {
+			
+			@Override
+			public void motionStopReceived(MotionStopEvent event) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void motionStartReceived(MotionStartEvent event) {
+				// TODO Auto-generated method stub
+				
+			}
+			
+			@Override
+			public void accelerationReceived(AccelerationEvent event) {
+				JSONObject data = new JSONObject();
+				
+				try {
+					data.put("timestamp", new Date().getTime())
+						.put("device_id", deviceId)
+						.put("device_name", "Emulator")
+						.put("data", new JSONObject()
+										.put("x", event.getX())
+										.put("y", event.getY())
+										.put("z", event.getY()));
+
+					postData(data.toString());
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+			}
+		});
+        
         wiigee.setCloseGestureButton(CLOSE_GESTURE_BUTTON);
         wiigee.setRecognitionButton(RECOGNITION_BUTTON);
         wiigee.setTrainButton(TRAIN_BUTTON);
@@ -182,28 +232,16 @@ public class GesturesUnlockActivity extends Activity {
 	    return Build.MANUFACTURER.equals("unknown");
 	}
 	
-	public void postData() {
+	// XXX: rewrite this!
+	public void postData(String data) {
 	    HttpClient httpclient = new DefaultHttpClient();
-	    HttpPost httppost = new HttpPost("http://www.yoursite.com/script.php");
+	    HttpPost httppost = new HttpPost(ACCLAB_URL);
 
-	    try {
-	    	
-			JSONArray data = 
-					new JSONArray()
-					.put(new JSONObject()
-							.put("type", "random")
-							.put("time", "2011-12-10T00:01:26.984Z")
-							.put("data", new JSONObject().put("random", "Hello"))
-							.put("type", "random"));
-	
-	        
+	    try {        
 	        httppost.setEntity(new StringEntity(data.toString()));
 	        httppost.setHeader("Content-type", "application/json");
 	        
 	        HttpResponse response = httpclient.execute(httppost);
-	        
-	    } catch(JSONException e) {
-	        // TODO Auto-generated catch block
 	    } catch (ClientProtocolException e) {
 	        // TODO Auto-generated catch block
 	    } catch (IOException e) {
