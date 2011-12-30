@@ -55,12 +55,14 @@ public class GesturesUnlockActivity extends Activity {
 	
 	final private AndroidWiigee wiigee = new AndroidWiigee();
 	
+	final private List<AccelerationEvent> eventList = new ArrayList<AccelerationEvent>();
+	
 	private static int TRAIN_BUTTON = 1;
 	private static int CLOSE_GESTURE_BUTTON = 2;
 	private static int RECOGNITION_BUTTON = 3;
 	
 	// TODO: let user change ulr from app 
-	private static String ACCLAB_URL = "http://192.168.0.189:3000/1.0/acc/put";
+	private static String ACCLAB_URL = "http://rmining.net:3000/1.0/acc/put";
 	
     /** Called when the activity is first created. */
     @Override
@@ -77,7 +79,7 @@ public class GesturesUnlockActivity extends Activity {
 
         // We use IMEI code for identity this device (really?) in acclab
         TelephonyManager telephonyManager = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
-        final String  deviceId = telephonyManager.getDeviceId();
+        final String deviceId = telephonyManager.getDeviceId();
         
         if (deviceId.equals("000000000000000")) {
         	// XXX: do not pull this data
@@ -92,6 +94,8 @@ public class GesturesUnlockActivity extends Activity {
 //		wiigee.getDevice().addAccelerationFilter(new MotionDetectFilter(this));
 //		wiigee.getDevice().addAccelerationFilter(new DirectionalEquivalenceFilter());
 		
+        final TextView textview_number_of_samples = (TextView) findViewById(R.id.textView_number_of_samples);
+        
         wiigee.getDevice().addAccelerationListener(new AccelerationListener() {
 			
 			@Override
@@ -107,24 +111,45 @@ public class GesturesUnlockActivity extends Activity {
 			}
 			
 			@Override
-			public void accelerationReceived(AccelerationEvent event) {
-				JSONObject data = new JSONObject();
+			public void accelerationReceived(final AccelerationEvent event) {
+				eventList.add(event);
+
+				textview_number_of_samples.setText(Integer.toString(eventList.size()));
+
+				// XXX: send adaptive
+				if (eventList.size() < 200) {
+					return;
+				}
+				
+				final JSONArray dataArray = new JSONArray();
 				
 				try {
-					data.put("timestamp", new Date().getTime())
-						.put("device_id", deviceId)
-						.put("device_name", "Emulator")
-						.put("data", new JSONObject()
-										.put("x", event.getX())
-										.put("y", event.getY())
-										.put("z", event.getY()));
+					for (AccelerationEvent ev : eventList) {
+						JSONObject data = new JSONObject();
 
-					postData(data.toString());
+						data.put("timestamp", new Date().getTime())
+							.put("device_id", deviceId)
+							.put("device_name", "Emulator")
+							.put("data",
+									new JSONObject().put("x", ev.getX())
+													.put("y", ev.getY())
+													.put("z", ev.getY()));
+
+						dataArray.put(data);
+					}
 				} catch (JSONException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
+				new Thread(new Runnable() {
+					
+					@Override
+					public void run() {
+						postData(dataArray.toString());
+					}
+				}).start();
+				
+				eventList.clear();
 			}
 		});
         
@@ -138,7 +163,7 @@ public class GesturesUnlockActivity extends Activity {
         final Button button_recognition = (Button) findViewById(R.id.button_recognition);
         final Button button_close_gesture = (Button) findViewById(R.id.button_close_gesture);
         final TextView textview_status = (TextView) findViewById(R.id.textView_status);
-
+       
         wiigee.addGestureListener(new GestureListener() {
 
 			@Override
@@ -219,11 +244,11 @@ public class GesturesUnlockActivity extends Activity {
 		if (isEmulator()) {
 			mSensorManagerSimulator.registerListener((SensorEventListener) wiigee.getDevice(), 
 					mSensorManagerSimulator.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), 
-					SensorManager.SENSOR_DELAY_NORMAL);
+					SensorManager.SENSOR_DELAY_GAME);
 		} else {
 			mSensorManager.registerListener((android.hardware.SensorEventListener) wiigee.getDevice(), 
 					mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), 
-					SensorManager.SENSOR_DELAY_NORMAL);
+					SensorManager.SENSOR_DELAY_GAME);
 		}
 
 		try {
