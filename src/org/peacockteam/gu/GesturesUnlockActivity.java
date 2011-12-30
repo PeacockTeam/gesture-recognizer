@@ -30,6 +30,7 @@ import org.wiigee.event.MotionStopEvent;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorListener;
 import android.hardware.SensorManager;
@@ -37,6 +38,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -188,6 +192,24 @@ public class GesturesUnlockActivity extends Activity {
 				wiigee.getDevice().fireButtonPressedEvent(CLOSE_GESTURE_BUTTON);
 			}
 		});
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_menu, menu);
+    	return super.onCreateOptionsMenu(menu);
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case R.id.prefs:
+        	startActivity(new Intent(getApplicationContext(), PreferencesView.class));
+            return true;
+        default:
+        	return super.onOptionsItemSelected(item);
+        }
     }
     
 	@Override

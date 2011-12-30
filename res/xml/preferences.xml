@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory 
+        android:title="First Category"
+        android:key="first_category">
+
+		<EditTextPreference
+            android:key="acclab_server"
+            android:title="Acclab server" 
+            android:summary="Define where data to send"
+            android:dialogTitle="Acclab server"
+            android:dialogMessage="Provide a server"    
+            android:defaultValue="http://rmining.net/1.0/acc/put" />    
+
+    </PreferenceCategory>
+    
+</PreferenceScreen>
